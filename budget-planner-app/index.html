@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Biweekly Budget Planner</title>
+<meta name="theme-color" content="#72243E">
+<meta name="description" content="A simple biweekly budget planner. Works offline, saves on your device.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Budget">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #FBEAF0;
+    margin: 0;
+    padding: 16px;
+    color: #2C2C2A;
+  }
+  .wrap {
+    max-width: 640px;
+    margin: 0 auto;
+  }
+  h1 {
+    font-size: 22px;
+    font-weight: 700;
+    text-align: center;
+    color: #72243E;
+    margin: 4px 0 2px;
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 13px;
+    color: #993556;
+    margin-bottom: 16px;
+  }
+  .period-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .period-tab {
+    flex: 1;
+    text-align: center;
+    padding: 10px 6px;
+    border-radius: 12px;
+    background: #F4C0D1;
+    color: #72243E;
+    font-weight: 700;
+    font-size: 14px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    user-select: none;
+  }
+  .period-tab.active {
+    background: #ED93B1;
+    border-color: #72243E;
+  }
+  .period-label-input {
+    width: 100%;
+    text-align: center;
+    background: transparent;
+    border: none;
+    font-weight: 700;
+    font-size: 14px;
+    color: inherit;
+  }
+  .card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 14px 12px 18px;
+    box-shadow: 0 2px 8px rgba(114,36,62,0.12);
+    margin-bottom: 16px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+  th {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #993556;
+    text-align: left;
+    padding: 6px 4px;
+    border-bottom: 2px solid #F0997B;
+  }
+  th.num, td.num { text-align: right; }
+  td {
+    padding: 8px 4px;
+    font-size: 14px;
+    border-bottom: 1px solid #F5DCE4;
+    vertical-align: middle;
+  }
+  td.item-cell {
+    font-weight: 600;
+  }
+  .item-icon {
+    margin-right: 6px;
+  }
+  input.money {
+    width: 100%;
+    border: 1px solid #E5C9D2;
+    border-radius: 8px;
+    padding: 6px 6px;
+    font-size: 14px;
+    text-align: right;
+    background: #FCF6F8;
+    color: #2C2C2A;
+  }
+  input.money:focus {
+    outline: none;
+    border-color: #D4537E;
+    background: #fff;
+  }
+  input.item-name {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 6px 2px;
+    color: #2C2C2A;
+  }
+  .add-row-btn {
+    width: 100%;
+    margin-top: 8px;
+    padding: 8px;
+    border-radius: 10px;
+    border: 1.5px dashed #D4537E;
+    background: transparent;
+    color: #993556;
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .remove-btn {
+    background: none;
+    border: none;
+    color: #A32D2D;
+    font-size: 16px;
+    padding: 2px 6px;
+    cursor: pointer;
+  }
+  tfoot td {
+    font-weight: 700;
+    border-bottom: none;
+    border-top: 2px solid #D4537E;
+    padding-top: 10px;
+    font-size: 14px;
+  }
+  .diff-row td {
+    border-top: none;
+    padding-top: 2px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .diff-good { color: #3B6D11; }
+  .diff-bad { color: #A32D2D; }
+  .note {
+    font-size: 12px;
+    color: #999;
+    text-align: center;
+    margin-top: -6px;
+    margin-bottom: 14px;
+  }
+  .actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .btn {
+    flex: 1;
+    padding: 12px;
+    border-radius: 12px;
+    border: none;
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .btn-print {
+    background: #72243E;
+    color: white;
+  }
+  .btn-reset {
+    background: #F1EFE8;
+    color: #444441;
+  }
+  .saved-note {
+    text-align: center;
+    font-size: 11px;
+    color: #aaa;
+    margin-bottom: 10px;
+  }
+  .joke-tag {
+    font-size: 10px;
+    background: #FAC775;
+    color: #633806;
+    padding: 1px 6px;
+    border-radius: 8px;
+    margin-left: 4px;
+    font-weight: 700;
+  }
+
+  /* ===== PRINT STYLES ===== */
+  @media print {
+    body { background: white; padding: 0; }
+    .actions, .period-tabs, .add-row-btn, .remove-btn, .saved-note, .note { display: none !important; }
+    .card { box-shadow: none; border: 1px solid #ccc; page-break-inside: avoid; margin-bottom: 24px; }
+    .wrap { max-width: 100%; }
+    input.money, input.item-name { border: none; background: transparent; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>💗 My Biweekly Budget</h1>
+  <div class="subtitle">Track it on your phone, print it for the fridge</div>
+
+  <div class="saved-note" id="savedNote">Your numbers save automatically on this device.</div>
+
+  <div class="period-tabs">
+    <div class="period-tab active" data-period="0" onclick="switchPeriod(0)">Period 1</div>
+    <div class="period-tab" data-period="1" onclick="switchPeriod(1)">Period 2</div>
+  </div>
+
+  <div id="periodContainer"></div>
+
+  <div class="actions">
+    <button class="btn btn-print" onclick="window.print()">🖨️ Print</button>
+    <button class="btn btn-reset" onclick="resetAll()">Reset</button>
+  </div>
+</div>
+
+<script>
+const DEFAULT_ITEMS = [
+  { name: "⚡ Electricity", budget: 0, actual: 0 },
+  { name: "🌐 Internet", budget: 0, actual: 0 },
+  { name: "🚿 Water", budget: 0, actual: 0 },
+  { name: "🛒 Market", budget: 0, actual: 0 },
+  { name: "🥦 Groceries", budget: 0, actual: 0 },
+  { name: "🛡️ Insurance", budget: 0, actual: 0 },
+  { name: "💰 Savings", budget: 0, actual: 0 },
+  { name: "📦 Online shopping (oops)", budget: 0, actual: 0 }
+];
+
+let state = {
+  labels: ["Period 1 (1st - 15th)", "Period 2 (16th - 31st)"],
+  periods: [
+    JSON.parse(JSON.stringify(DEFAULT_ITEMS)),
+    JSON.parse(JSON.stringify(DEFAULT_ITEMS))
+  ]
+};
+
+let currentPeriod = 0;
+
+const STORAGE_KEY = 'budget-planner-state';
+
+async function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.periods) state = parsed;
+    }
+  } catch (e) {
+    // no saved state yet, use defaults
+  }
+  render();
+}
+
+async function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    console.error('Save failed', e);
+  }
+}
+
+function fmt(n) {
+  const num = Number(n);
+  if (isNaN(num)) return "0.00";
+  return num.toFixed(2);
+}
+
+function switchPeriod(idx) {
+  currentPeriod = idx;
+  document.querySelectorAll('.period-tab').forEach((el, i) => {
+    el.classList.toggle('active', i === idx);
+  });
+  render();
+}
+
+function render() {
+  const container = document.getElementById('periodContainer');
+  const items = state.periods[currentPeriod];
+  let totalBudget = 0, totalActual = 0;
+  items.forEach(it => { totalBudget += Number(it.budget) || 0; totalActual += Number(it.actual) || 0; });
+  const diff = totalBudget - totalActual;
+
+  let rows = items.map((it, i) => `
+    <tr>
+      <td class="item-cell">
+        <input class="item-name" value="${escapeHtml(it.name)}" oninput="updateName(${i}, this.value)" />
+      </td>
+      <td class="num"><input class="money" inputmode="decimal" value="${fmt(it.budget)}" onchange="updateVal(${i},'budget',this.value)" /></td>
+      <td class="num"><input class="money" inputmode="decimal" value="${fmt(it.actual)}" onchange="updateVal(${i},'actual',this.value)" /></td>
+      <td><button class="remove-btn" onclick="removeRow(${i})" title="Remove">✕</button></td>
+    </tr>
+  `).join('');
+
+  container.innerHTML = `
+    <div class="card">
+      <input class="period-label-input" value="${escapeHtml(state.labels[currentPeriod])}" oninput="updateLabel(this.value)" />
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th class="num">Budget</th>
+            <th class="num">Actual</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td>Total</td>
+            <td class="num">$${fmt(totalBudget)}</td>
+            <td class="num">$${fmt(totalActual)}</td>
+            <td></td>
+          </tr>
+          <tr class="diff-row">
+            <td colspan="4" class="${diff >= 0 ? 'diff-good' : 'diff-bad'}">
+              ${diff >= 0 ? '✅ Under budget by $' + fmt(diff) : '⚠️ Over budget by $' + fmt(Math.abs(diff))}
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+      <button class="add-row-btn" onclick="addRow()">+ Add item</button>
+    </div>
+  `;
+}
+
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function updateName(i, val) {
+  state.periods[currentPeriod][i].name = val;
+  saveState();
+}
+function updateVal(i, field, val) {
+  const num = parseFloat(val);
+  state.periods[currentPeriod][i][field] = isNaN(num) ? 0 : num;
+  saveState();
+  render();
+}
+function updateLabel(val) {
+  state.labels[currentPeriod] = val;
+  saveState();
+}
+function addRow() {
+  state.periods[currentPeriod].push({ name: "New item", budget: 0, actual: 0 });
+  saveState();
+  render();
+}
+function removeRow(i) {
+  state.periods[currentPeriod].splice(i, 1);
+  saveState();
+  render();
+}
+async function resetAll() {
+  if (!confirm("Reset both periods back to the default categories?")) return;
+  state = {
+    labels: ["Period 1 (1st - 15th)", "Period 2 (16th - 31st)"],
+    periods: [
+      JSON.parse(JSON.stringify(DEFAULT_ITEMS)),
+      JSON.parse(JSON.stringify(DEFAULT_ITEMS))
+    ]
+  };
+  await saveState();
+  render();
+}
+
+loadState();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
